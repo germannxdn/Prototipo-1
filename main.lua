@@ -126,11 +126,41 @@ for fila = 0, 2 do
 end
 end
 end
+-- =================== REINICIAR JUEGO ===================
+
+function ReiniciarJuego()
+
+    Jugador.x = 100
+    Jugador.y = Suelo.y - Jugador.alto
+
+    Jugador.muerto = false
+    Jugador.muriendo = false
+    Jugador.gano = false
+
+    Jugador.mirandoDerecha = true
+
+    Jugador.frameCorrer = 1
+    Jugador.tiempoAnimacion = 0
+
+    velocidadY = 0
+
+    Trampa.activa = false
+    Trampa.frame = 1
+    Trampa.tiempoAnimacion = 0
+
+end
 
 -- =================== INTERACCION ===================
 
 function love.keypressed(key)
 
+    -- Reiniciar juego
+    if key == "r" then
+        ReiniciarJuego()
+        return
+    end
+
+    -- Saltar
     if key == "space" then
 
         if not Jugador.muerto
