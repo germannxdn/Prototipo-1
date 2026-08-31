@@ -13,6 +13,7 @@ Jugador = {
     sprite = nil,
 
     spritesheetCorrer = nil,
+    mirandoDerecha = true,
     animCorrer = {},
     frameCorrer = 1,
     tiempoAnimacion = 0,
@@ -189,10 +190,12 @@ function love.update(dt)
 
     if love.keyboard.isDown("left") then
         Jugador.x = Jugador.x - (Jugador.vel * dt)
+        Jugador.mirandoDerecha = false
     end
 
     if love.keyboard.isDown("right") then
         Jugador.x = Jugador.x + (Jugador.vel * dt)
+        Jugador.mirandoDerecha = true
     end
 
     -- ================= ANIMACION =================
@@ -329,19 +332,37 @@ end
     -- El jugador solamente se dibuja si está vivo
     if not Jugador.muriendo and not Jugador.muerto then
     if love.keyboard.isDown("left") or love.keyboard.isDown("right") then
-        -- Si el jugador está corriendo, dibujamos la animación de correr
-    love.graphics.draw(
-        Jugador.spritesheetCorrer,
-        Jugador.animCorrer[Jugador.frameCorrer],
-        Jugador.x,
-        Jugador.y - 21,
-        0,
-        64 / (Jugador.spritesheetCorrer:getWidth() / 4),
-        64 / (Jugador.spritesheetCorrer:getWidth() / 4)
-    )
+        -- Dibujamos la animación de correr
+    local escala =
+            64 / (Jugador.spritesheetCorrer:getWidth() / 4)
 
+        if Jugador.mirandoDerecha then
+
+            love.graphics.draw(
+                Jugador.spritesheetCorrer,
+                Jugador.animCorrer[Jugador.frameCorrer],
+                Jugador.x,
+                Jugador.y - 21,
+                0,
+                escala,
+                escala
+            )
+
+        else
+
+            love.graphics.draw(
+                Jugador.spritesheetCorrer,
+                Jugador.animCorrer[Jugador.frameCorrer],
+                Jugador.x + Jugador.ancho,
+                Jugador.y - 21,
+                0,
+                -escala,
+                escala
+            )
+
+        end
 else
-
+-- Sprite parado
     love.graphics.draw(
         Jugador.sprite,
         Jugador.x,
