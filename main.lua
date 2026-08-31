@@ -50,6 +50,8 @@ velocidadY = 0
 Fondo = nil
 MusicaFondo = nil
 
+mostrarControles = false
+
 -- =================== COLISION ===================
 
 function HayColision(a, b)
@@ -159,7 +161,6 @@ function love.keypressed(key)
         ReiniciarJuego()
         return
     end
-
     -- Saltar
     if key == "space" then
 
@@ -172,6 +173,10 @@ function love.keypressed(key)
 
         end
 
+    end
+    -- MOSTRAR / OCULTAR CONTROLES
+    if key == "h" then
+        mostrarControles = not mostrarControles
     end
 
 end
@@ -412,6 +417,17 @@ end
             350,
             250
         )
+        love.graphics.print(
+        "Las profundidades te han reclamado...",
+        280,
+        280
+    )
+
+        love.graphics.print(
+            "Presiona R para intentarlo nuevamente",
+            270,
+            310
+        )
 
     end
 
@@ -419,11 +435,69 @@ end
     if Jugador.gano then
 
         love.graphics.print(
-            "HAS GANADO",
-            350,
-            250
-        )
+        "HAS ESCAPADO",
+        340,
+        250
+    )
+
+    love.graphics.print(
+        "Has logrado atravesar la zona.",
+        300,
+        280
+    )
+
+    love.graphics.print(
+        "Presiona R para jugar nuevamente",
+        270,
+        310
+    )
 
     end
 
+    -- ================= CONTROLES =================
+
+    if mostrarControles then
+
+        love.graphics.print(
+            "CONTROLES",
+            330,
+            80
+        )
+
+        love.graphics.print(
+            "FLECHAS IZQ / DER  -  MOVERSE",
+            250,
+            120
+        )
+
+        love.graphics.print(
+            "ESPACIO  -  SALTAR",
+            280,
+            150
+        )
+
+        love.graphics.print(
+            "R  -  REINICIAR",
+            300,
+            180
+        )
+
+        love.graphics.print(
+            "H  -  OCULTAR CONTROLES",
+            260,
+            210
+        )
+
+    end
+    -- ================= AYUDA =================
+
+if not Jugador.muerto and not Jugador.gano then
+
+    love.graphics.print(
+        "Presiona H para ver los controles",
+        20,
+        20
+    )
+
+end
 end
