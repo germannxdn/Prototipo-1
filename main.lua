@@ -325,7 +325,9 @@ else
 
 end
 
-    --Sprite del jugador
+    -- ================= SPRITE DEL JUGADOR =================
+    -- El jugador solamente se dibuja si está vivo
+    if not Jugador.muriendo and not Jugador.muerto then
     if love.keyboard.isDown("left") or love.keyboard.isDown("right") then
         -- Si el jugador está corriendo, dibujamos la animación de correr
     love.graphics.draw(
@@ -348,7 +350,7 @@ else
         0.0625,
         0.0625
     )
-
+end
 end
 -- ================= MUERTE =================
 
