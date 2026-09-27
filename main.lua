@@ -1,51 +1,12 @@
+Jugador = require "entidades.jugador"
+Trampa = require "entidades.trampa"
 -- =================== DECLARACION ===================
-
-Jugador = {
-    x = 100,
-    y = 400,
-    ancho = 64,
-    alto = 64,
-    vel = 200,
-    velSalto = 500,
-    muerto = false,
-    muriendo = false,
-    gano = false,
-    sprite = nil,
-
-    spritesheetCorrer = nil,
-    mirandoDerecha = true,
-    animCorrer = {},
-    frameCorrer = 1,
-    tiempoAnimacion = 0,
-    velocidadAnimacion = 0.10
-}
-
 Suelo = {
     x = 0,
     y = 500,
     ancho = 800,
     alto = 1
 }
-
-Trampa = {
-    x = 450,
-    y = 490,
-    ancho = 100,
-    alto = 30,
-    activa = false,
-
-    sprite = nil,
-
-    spritesheet = nil,
-    animacion = {},
-    frame = 1,
-
-    tiempoAnimacion = 0,
-    velocidadAnimacion = 0.15
-}
-
-gravedad = 1000
-velocidadY = 0
 
 Fondo = nil
 MusicaFondo = nil
@@ -65,27 +26,31 @@ end
 -- =================== INICIALIZACION ===================
 
 function love.load()
+    jugador = Jugador(100, 400)
+
+    trampa = Trampa (450, 490)
+
     -- Jugador parado
-    Jugador.sprite = love.graphics.newImage("img/jugador/parado.png")
+    jugador.sprite = love.graphics.newImage("img/jugador/parado.png")
     
     -- Spritesheet de correr
-    Jugador.spritesheetCorrer =
+    jugador.spritesheetCorrer =
         love.graphics.newImage("img/jugador/correr.png")
     
     -- Dividimos el spritesheet en 4 frames
-    local anchoFrame = Jugador.spritesheetCorrer:getWidth() / 4
-    local altoFrame = Jugador.spritesheetCorrer:getHeight()
+    local anchoFrame = jugador.spritesheetCorrer:getWidth() / 4
+    local altoFrame = jugador.spritesheetCorrer:getHeight()
 
     for i = 0, 3 do
 
         table.insert(
-            Jugador.animCorrer,
+            jugador.animCorrer,
             love.graphics.newQuad(
                 anchoFrame * i,
                 0,
                 anchoFrame,
                 altoFrame,
-                Jugador.spritesheetCorrer
+                jugador.spritesheetCorrer
             )
         )
 
@@ -98,30 +63,30 @@ MusicaFondo:setLooping(true)
 MusicaFondo:play()
 
     -- Spritesheet de trampa
-    Trampa.sprite =
+    trampa.sprite =
     love.graphics.newImage("img/trampa/charco.png")
 
-Trampa.spritesheet =
+trampa.spritesheet =
     love.graphics.newImage("img/trampa/activacion.png")
     
 -- Dividir spritesheet de activación
 -- 4 columnas x 3 filas = 12 frames
 
-local anchoFrame = Trampa.spritesheet:getWidth() / 4
-local altoFrame = Trampa.spritesheet:getHeight() / 3
+local anchoFrame = trampa.spritesheet:getWidth() / 4
+local altoFrame = trampa.spritesheet:getHeight() / 3
 
 for fila = 0, 2 do
 
     for columna = 0, 3 do
 
         table.insert(
-            Trampa.animacion,
+            trampa.animacion,
             love.graphics.newQuad(
                 anchoFrame * columna,
                 altoFrame * fila,
                 anchoFrame,
                 altoFrame,
-                Trampa.spritesheet
+                trampa.spritesheet
             )
         )
 
@@ -132,23 +97,23 @@ end
 
 function ReiniciarJuego()
 
-    Jugador.x = 100
-    Jugador.y = Suelo.y - Jugador.alto
+    jugador.x = 100
+    jugador.y = Suelo.y - jugador.alto
 
-    Jugador.muerto = false
-    Jugador.muriendo = false
-    Jugador.gano = false
+    jugador.muerto = false
+    jugador.muriendo = false
+    jugador.gano = false
 
-    Jugador.mirandoDerecha = true
+    jugador.mirandoDerecha = true
 
-    Jugador.frameCorrer = 1
-    Jugador.tiempoAnimacion = 0
+    jugador.frameCorrer = 1
+    jugador.tiempoAnimacion = 0
 
-    velocidadY = 0
+    jugador.velocidadY = 0
 
-    Trampa.activa = false
-    Trampa.frame = 1
-    Trampa.tiempoAnimacion = 0
+    trampa.activa = false
+    trampa.frame = 1
+    trampa.tiempoAnimacion = 0
 
 end
 
@@ -164,12 +129,12 @@ function love.keypressed(key)
     -- Saltar
     if key == "space" then
 
-        if not Jugador.muerto
-        and not Jugador.muriendo
-        and not Jugador.gano
-        and Jugador.y + Jugador.alto >= Suelo.y then
+        if not jugador.muerto
+        and not jugador.muriendo
+        and not jugador.gano
+        and jugador.y + jugador.alto >= Suelo.y then
 
-            velocidadY = -Jugador.velSalto
+            jugador:saltar()
 
         end
 
@@ -187,32 +152,32 @@ end
 function love.update(dt)
 
     -- Si está muerto, no puede moverse
-    if Jugador.muerto or Jugador.gano then 
+    if jugador.muerto or jugador.gano then 
         return
     end
 
     -- Si está muriendo, reproducir animación de muerte
     -- ================= ANIMACION DE MUERTE =================
 
-    if Jugador.muriendo then
+    if jugador.muriendo then
 
-        Trampa.tiempoAnimacion =
-            Trampa.tiempoAnimacion + dt
+        trampa.tiempoAnimacion =
+            trampa.tiempoAnimacion + dt
 
-        if Trampa.tiempoAnimacion >= Trampa.velocidadAnimacion then
+        if trampa.tiempoAnimacion >= trampa.velocidadAnimacion then
 
-            Trampa.tiempoAnimacion = 0
+            trampa.tiempoAnimacion = 0
 
-            Trampa.frame =
-                Trampa.frame + 1
+            trampa.frame =
+                trampa.frame + 1
 
             -- Llegamos al último cuadro
-            if Trampa.frame > #Trampa.animacion then
+            if trampa.frame > #trampa.animacion then
 
-                Trampa.frame = #Trampa.animacion
+                trampa.frame = #trampa.animacion
 
-                Jugador.muriendo = false
-                Jugador.muerto = true
+                jugador.muriendo = false
+                jugador.muerto = true
 
             end
 
@@ -221,76 +186,25 @@ function love.update(dt)
         return
 
     end
-    -- ================= MOVIMIENTO =================
 
-    if love.keyboard.isDown("left") then
-        Jugador.x = Jugador.x - (Jugador.vel * dt)
-        Jugador.mirandoDerecha = false
-    end
+    -- ================= JUGADOR =================
 
-    if love.keyboard.isDown("right") then
-        Jugador.x = Jugador.x + (Jugador.vel * dt)
-        Jugador.mirandoDerecha = true
-    end
+    jugador:actualizar(dt, Suelo.y)
 
-    -- ================= ANIMACION =================
-
-    local corriendo = false
-
-    if love.keyboard.isDown("left") or love.keyboard.isDown("right") then
-    corriendo = true
-    end
-
-    if corriendo then
-
-    Jugador.tiempoAnimacion =
-        Jugador.tiempoAnimacion + dt
-
-    if Jugador.tiempoAnimacion >= Jugador.velocidadAnimacion then
-
-        Jugador.tiempoAnimacion = 0
-
-        Jugador.frameCorrer =
-            Jugador.frameCorrer + 1
-
-        if Jugador.frameCorrer > #Jugador.animCorrer then
-            Jugador.frameCorrer = 1
-        end
-
-    end
-
-else
-
-    Jugador.frameCorrer = 1
-    Jugador.tiempoAnimacion = 0
-
-end
-
-    -- ================= SALTO / GRAVEDAD =================
-    velocidadY = velocidadY + (gravedad * dt)
-
-    Jugador.y = Jugador.y + (velocidadY * dt)
-    -- Mantener al jugador sobre el suelo
-    if Jugador.y + Jugador.alto >= Suelo.y then
-
-        Jugador.y = Suelo.y - Jugador.alto
-        velocidadY = 0
-
-    end
-
+    trampa:actualizar(dt)
 
     -- TRAMPA
-    if HayColision(Jugador, Trampa) then
-        Trampa.activa = true
-        Jugador.muriendo = true
+    if HayColision(jugador, trampa) then
+        trampa:activar()
+        jugador.muriendo = true
 
-        velocidadY = 0
+        jugador.velocidadY = 0
 
     end
 
     -- ================= GANAR =================
-    if Jugador.x + Jugador.ancho >= 800 then
-    Jugador.gano = true
+    if jugador.x + jugador.ancho >= 800 then
+    jugador.gano = true
 end
 
 end
@@ -309,108 +223,14 @@ function love.draw()
     )
     
     -- TRAMPA
-    if Trampa.activa then
-
-    local _, _, anchoFrame, altoFrame =
-        Trampa.animacion[Trampa.frame]:getViewport()
-
-    local escala = Trampa.ancho / anchoFrame
-
-    local anchoDibujo = anchoFrame * escala
-    local altoDibujo = altoFrame * escala
-
-    local xDibujo =
-        Trampa.x + (Trampa.ancho - anchoDibujo) / 2
-
-    local yDibujo =
-        Suelo.y - altoDibujo
-
-    love.graphics.draw(
-        Trampa.spritesheet,
-        Trampa.animacion[Trampa.frame],
-        xDibujo,
-        yDibujo,
-        0,
-        escala,
-        escala
-    )
-
-else
-
-    local escala =
-        Trampa.ancho / Trampa.sprite:getWidth()
-
-    local anchoDibujo =
-        Trampa.sprite:getWidth() * escala
-
-    local altoDibujo =
-        Trampa.sprite:getHeight() * escala
-
-    local xDibujo =
-        Trampa.x + (Trampa.ancho - anchoDibujo) / 2
-
-    local yDibujo =
-        Suelo.y - altoDibujo
-
-    love.graphics.draw(
-        Trampa.sprite,
-        xDibujo,
-        yDibujo,
-        0,
-        escala,
-        escala
-    )
-
-end
+    trampa:dibujar(Suelo.y)
 
     -- ================= SPRITE DEL JUGADOR =================
-    -- El jugador solamente se dibuja si está vivo
-    if not Jugador.muriendo and not Jugador.muerto then
-    if love.keyboard.isDown("left") or love.keyboard.isDown("right") then
-        -- Dibujamos la animación de correr
-    local escala =
-            64 / (Jugador.spritesheetCorrer:getWidth() / 4)
+    jugador:dibujar()
 
-        if Jugador.mirandoDerecha then
-
-            love.graphics.draw(
-                Jugador.spritesheetCorrer,
-                Jugador.animCorrer[Jugador.frameCorrer],
-                Jugador.x,
-                Jugador.y - 21,
-                0,
-                escala,
-                escala
-            )
-
-        else
-
-            love.graphics.draw(
-                Jugador.spritesheetCorrer,
-                Jugador.animCorrer[Jugador.frameCorrer],
-                Jugador.x + Jugador.ancho,
-                Jugador.y - 21,
-                0,
-                -escala,
-                escala
-            )
-
-        end
-else
--- Sprite parado
-    love.graphics.draw(
-        Jugador.sprite,
-        Jugador.x,
-        Jugador.y - 32,
-        0,
-        0.0625,
-        0.0625
-    )
-end
-end
 -- ================= MUERTE =================
 
-    if Jugador.muerto then
+    if jugador.muerto then
 
         love.graphics.print(
             "HAS MUERTO",
@@ -432,7 +252,7 @@ end
     end
 
     -- ================= GANAR =================
-    if Jugador.gano then
+    if jugador.gano then
 
         love.graphics.print(
         "HAS ESCAPADO",
@@ -491,7 +311,7 @@ end
     end
     -- ================= AYUDA =================
 
-if not Jugador.muerto and not Jugador.gano then
+    if not jugador.muerto and not jugador.gano then
 
     love.graphics.print(
         "Presiona H para ver los controles",
