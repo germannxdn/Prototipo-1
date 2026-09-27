@@ -195,5 +195,14 @@ function Trampa:dibujar(sueloY)
 
 end
 
+function Trampa:reiniciar()
+
+    self.activa = false
+
+    self.frame = 1
+
+    self.tiempoAnimacion = 0
+
+end
 
 return Trampa

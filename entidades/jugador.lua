@@ -114,6 +114,25 @@ function Jugador:saltar()
     self.velocidadY = -self.velSalto
 end
 
+
+function Jugador:reiniciar(x, y)
+
+    self.x = x
+    self.y = y
+
+    self.muerto = false
+    self.muriendo = false
+    self.gano = false
+
+    self.mirandoDerecha = true
+
+    self.frameCorrer = 1
+    self.tiempoAnimacion = 0
+
+    self.velocidadY = 0
+
+end
+
 function Jugador:dibujar()
 
     -- El jugador no se dibuja si está muriendo o muerto

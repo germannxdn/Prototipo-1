@@ -1,5 +1,12 @@
 Jugador = require "entidades.jugador"
 Trampa = require "entidades.trampa"
+
+MaquinaEstado = require "maquinaEstados"
+EstadoJugando = require "estados.estadoJugando"
+EstadoMuriendo = require "estados.estadoMuriendo"
+EstadoMuerto = require "estados.estadoMuerto"
+EstadoGanado = require "estados.estadoGanado"
+
 -- =================== DECLARACION ===================
 Suelo = {
     x = 0,
@@ -92,28 +99,60 @@ for fila = 0, 2 do
 
 end
 end
+
+-- MaquinaEstado
+maquinaEstados = MaquinaEstado({
+
+        jugando = function()
+            return EstadoJugando()
+        end,
+
+        muriendo = function()
+            return EstadoMuriendo()
+        end,
+
+        muerto = function()
+            return EstadoMuerto()
+        end,
+
+        ganado = function()
+            return EstadoGanado()
+        end
+
+    })
+
+    maquinaEstados:cambiar(
+        "jugando",
+        {
+            jugador = jugador,
+            trampa = trampa,
+            sueloY = Suelo.y,
+            maquina = maquinaEstados
+        }
+    )
 end
+
+
 -- =================== REINICIAR JUEGO ===================
 
 function ReiniciarJuego()
 
-    jugador.x = 100
-    jugador.y = Suelo.y - jugador.alto
+    jugador:reiniciar(
+        100,
+        Suelo.y - jugador.alto
+    )
 
-    jugador.muerto = false
-    jugador.muriendo = false
-    jugador.gano = false
+    trampa:reiniciar()
 
-    jugador.mirandoDerecha = true
-
-    jugador.frameCorrer = 1
-    jugador.tiempoAnimacion = 0
-
-    jugador.velocidadY = 0
-
-    trampa.activa = false
-    trampa.frame = 1
-    trampa.tiempoAnimacion = 0
+    maquinaEstados:cambiar(
+        "jugando",
+        {
+            jugador = jugador,
+            trampa = trampa,
+            sueloY = Suelo.y,
+            maquina = maquinaEstados
+        }
+    )
 
 end
 
@@ -151,61 +190,7 @@ end
 
 function love.update(dt)
 
-    -- Si está muerto, no puede moverse
-    if jugador.muerto or jugador.gano then 
-        return
-    end
-
-    -- Si está muriendo, reproducir animación de muerte
-    -- ================= ANIMACION DE MUERTE =================
-
-    if jugador.muriendo then
-
-        trampa.tiempoAnimacion =
-            trampa.tiempoAnimacion + dt
-
-        if trampa.tiempoAnimacion >= trampa.velocidadAnimacion then
-
-            trampa.tiempoAnimacion = 0
-
-            trampa.frame =
-                trampa.frame + 1
-
-            -- Llegamos al último cuadro
-            if trampa.frame > #trampa.animacion then
-
-                trampa.frame = #trampa.animacion
-
-                jugador.muriendo = false
-                jugador.muerto = true
-
-            end
-
-        end
-
-        return
-
-    end
-
-    -- ================= JUGADOR =================
-
-    jugador:actualizar(dt, Suelo.y)
-
-    trampa:actualizar(dt)
-
-    -- TRAMPA
-    if HayColision(jugador, trampa) then
-        trampa:activar()
-        jugador.muriendo = true
-
-        jugador.velocidadY = 0
-
-    end
-
-    -- ================= GANAR =================
-    if jugador.x + jugador.ancho >= 800 then
-    jugador.gano = true
-end
+    maquinaEstados:actualizar(dt)
 
 end
 -- =================== RENDERIZADO ===================
@@ -222,57 +207,8 @@ function love.draw()
         600 / Fondo:getHeight()
     )
     
-    -- TRAMPA
-    trampa:dibujar(Suelo.y)
-
-    -- ================= SPRITE DEL JUGADOR =================
-    jugador:dibujar()
-
--- ================= MUERTE =================
-
-    if jugador.muerto then
-
-        love.graphics.print(
-            "HAS MUERTO",
-            350,
-            250
-        )
-        love.graphics.print(
-        "Las profundidades te han reclamado...",
-        280,
-        280
-    )
-
-        love.graphics.print(
-            "Presiona R para intentarlo nuevamente",
-            270,
-            310
-        )
-
-    end
-
-    -- ================= GANAR =================
-    if jugador.gano then
-
-        love.graphics.print(
-        "HAS ESCAPADO",
-        340,
-        250
-    )
-
-    love.graphics.print(
-        "Has logrado atravesar la zona.",
-        300,
-        280
-    )
-
-    love.graphics.print(
-        "Presiona R para jugar nuevamente",
-        270,
-        310
-    )
-
-    end
+-- ================= JUEGO =================
+maquinaEstados:dibujar()
 
     -- ================= CONTROLES =================
 
