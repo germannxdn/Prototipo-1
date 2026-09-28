@@ -327,6 +327,9 @@ function love.draw()
 
     camara_principal:attach()
 
+    -- ================= FONDO =================
+love.graphics.draw(Fondo, 0, 0)
+
     -- ================= MAPA =================
     Mapa:drawLayer(Mapa.layers["Piso"])
     Mapa:drawLayer(Mapa.layers["Decoracion"])
