@@ -35,24 +35,6 @@ function EstadoGanado:dibujar()
 
     self.jugador:dibujar()
 
-    love.graphics.print(
-        "HAS ESCAPADO",
-        340,
-        250
-    )
-
-    love.graphics.print(
-        "Has logrado atravesar la zona.",
-        300,
-        280
-    )
-
-    love.graphics.print(
-        "Presiona R para jugar nuevamente",
-        270,
-        310
-    )
-
 end
 
 

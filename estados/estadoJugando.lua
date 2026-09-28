@@ -6,9 +6,11 @@ EstadoJugando = Class{__includes = Estado}
 function EstadoJugando:init()
 
     self.jugador = nil
-    self.trampa = nil
+    self.trampas = {}
     self.sueloY = nil
     self.maquina = nil
+    self.mundo = nil
+    self.paredDerecha = nil
 
 end
 
@@ -16,10 +18,11 @@ end
 function EstadoJugando:ingresar(parametros)
 
     self.jugador = parametros.jugador
-    self.trampa = parametros.trampa
+    self.trampas = parametros.trampas
     self.sueloY = parametros.sueloY
     self.maquina = parametros.maquina
-
+    self.mundo = parametros.mundo
+    self.paredDerecha = parametros.paredDerecha
 end
 
 
@@ -32,47 +35,47 @@ function EstadoJugando:actualizar(dt)
 
     -- ================= JUGADOR =================
 
-    self.jugador:actualizar(
-        dt,
-        self.sueloY
-    )
+    self.jugador:actualizar(dt, self.mundo)
 
 
     -- ================= TRAMPA =================
 
-    self.trampa:actualizar(dt)
+    for _, trampa in ipairs(self.trampas) do
+    trampa:actualizar(dt)
+end
 
 
     -- ================= COLISION =================
 
+for _, trampa in ipairs(self.trampas) do
+
     if HayColision(
-    self.jugador,
-    self.trampa
-) then
+        self.jugador,
+        trampa
+    ) then
 
-    self.trampa:activar()
+        trampa:activar()
 
-    self.jugador.velocidadY = 0
+        self.jugador.velocidadY = 0
 
-    self.maquina:cambiar(
-        "muriendo",
-        {
-            jugador = self.jugador,
-            trampa = self.trampa,
-            sueloY = self.sueloY,
-            maquina = self.maquina
-            
-        }
-    )
+        self.maquina:cambiar(
+            "muriendo",
+            {
+                jugador = self.jugador,
+                trampa = trampa,
+                maquina = self.maquina
+            }
+        )
 
-    return
+        return
+    end
 
 end
 
 
     -- ================= GANAR =================
 
-    if self.jugador.x + self.jugador.ancho >= 800 then
+    if self.jugador.x + self.jugador.ancho >= self.paredDerecha.x then
 
     self.maquina:cambiar(
         "ganado",
@@ -92,7 +95,9 @@ end
 
 function EstadoJugando:dibujar()
 
-    self.trampa:dibujar(self.sueloY)
+    for _, trampa in ipairs(self.trampas) do
+    trampa:dibujar()
+end
     self.jugador:dibujar()
 
 end

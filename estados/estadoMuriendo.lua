@@ -8,7 +8,6 @@ function EstadoMuriendo:init()
     self.jugador = nil
     self.trampa = nil
     self.maquina = nil
-    self.sueloY = nil
 
 end
 
@@ -18,7 +17,6 @@ function EstadoMuriendo:ingresar(parametros)
     self.jugador = parametros.jugador
     self.trampa = parametros.trampa
     self.maquina = parametros.maquina
-    self.sueloY = parametros.sueloY
 
     self.jugador.muriendo = true
 
@@ -61,7 +59,6 @@ function EstadoMuriendo:actualizar(dt)
                 {
                     jugador = self.jugador,
                     trampa = self.trampa,
-                    sueloY = self.sueloY,
                     maquina = self.maquina
                 }
             )
@@ -74,7 +71,7 @@ end
 
 
 function EstadoMuriendo:dibujar()
-self.trampa:dibujar(self.sueloY)
+self.trampa:dibujar()
 end
 
 

@@ -14,6 +14,7 @@ function Jugador:init(x, y)
 
     self.gravedad = 1000
     self.velocidadY = 0
+    self.estaEnSuelo = false
 
     self.muerto = false
     self.muriendo = false
@@ -28,45 +29,64 @@ function Jugador:init(x, y)
     self.frameCorrer = 1
     self.tiempoAnimacion = 0
     self.velocidadAnimacion = 0.10
+    
 end
-function Jugador:actualizar(dt, sueloY)
+function Jugador:actualizar(dt, mundo)
 
-    -- Movimiento horizontal
+-- Movimiento horizontal
 
-    if love.keyboard.isDown("left") then
+local movimientoX = 0
 
-        self.x = self.x - (self.vel * dt)
-        self.mirandoDerecha = false
+if love.keyboard.isDown("left") then
+    movimientoX = -self.vel * dt
+    self.mirandoDerecha = false
+end
 
-    end
-
-
-    if love.keyboard.isDown("right") then
-
-        self.x = self.x + (self.vel * dt)
-        self.mirandoDerecha = true
-
-    end
+if love.keyboard.isDown("right") then
+    movimientoX = self.vel * dt
+    self.mirandoDerecha = true
+end
 
 
-    -- Gravedad
+-- Gravedad
 
-    self.velocidadY =
-        self.velocidadY + (self.gravedad * dt)
-
-    self.y =
-        self.y + (self.velocidadY * dt)
+self.velocidadY =
+    self.velocidadY + (self.gravedad * dt)
 
 
-    -- Suelo
+-- Movimiento total
 
-    if self.y + self.alto >= sueloY then
+local nuevaX =
+    self.x + movimientoX
 
-        self.y = sueloY - self.alto
+local nuevaY =
+    self.y + (self.velocidadY * dt)
 
+
+local x, y, cols, len =
+    mundo:move(
+        self,
+        nuevaX,
+        nuevaY
+    )
+
+
+self.x = x
+self.y = y
+
+
+-- Colisiones verticales
+self.estaEnSuelo = false
+for i = 1, len do
+
+    local col = cols[i]
+
+    if col.normal.y == -1 then
         self.velocidadY = 0
-
+        self.estaEnSuelo = true
     end
+
+end
 
 
     -- Animación de correr
@@ -130,6 +150,7 @@ function Jugador:reiniciar(x, y)
     self.tiempoAnimacion = 0
 
     self.velocidadY = 0
+    self.estaEnSuelo = false
 
 end
 

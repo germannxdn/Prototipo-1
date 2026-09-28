@@ -104,7 +104,7 @@ end
 -- DIBUJAR TRAMPA
 -- ==========================================
 
-function Trampa:dibujar(sueloY)
+function Trampa:dibujar()
 
     if self.activa then
 
@@ -130,7 +130,7 @@ function Trampa:dibujar(sueloY)
 
 
         local yDibujo =
-            sueloY - altoDibujo
+        self.y + self.alto - altoDibujo + 10
 
 
         love.graphics.draw(
@@ -172,7 +172,7 @@ function Trampa:dibujar(sueloY)
 
 
         local yDibujo =
-            sueloY - altoDibujo
+        self.y + self.alto - altoDibujo + 10
 
 
         love.graphics.draw(

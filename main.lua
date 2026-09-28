@@ -1,3 +1,5 @@
+require "dependencias"
+
 Jugador = require "entidades.jugador"
 Trampa = require "entidades.trampa"
 
@@ -7,18 +9,19 @@ EstadoMuriendo = require "estados.estadoMuriendo"
 EstadoMuerto = require "estados.estadoMuerto"
 EstadoGanado = require "estados.estadoGanado"
 
+
+
 -- =================== DECLARACION ===================
-Suelo = {
-    x = 0,
-    y = 500,
-    ancho = 800,
-    alto = 1
-}
+
 
 Fondo = nil
 MusicaFondo = nil
-
+Mapa = nil
 mostrarControles = false
+camara_principal = nil
+mundo = nil
+paredDerecha = nil
+sueloMapa = nil
 
 -- =================== COLISION ===================
 
@@ -33,9 +36,59 @@ end
 -- =================== INICIALIZACION ===================
 
 function love.load()
+
+    Mapa = STI("mapa/nivel1.lua")
+
+    mundo = Bump.newWorld(64)
+
+    -- Buscamos la pared derecha en el mapa
+    for _, objeto in ipairs(Mapa.layers["Colisiones"].objects) do
+
+    if objeto.name == "ParedDerecha" then
+        paredDerecha = objeto
+    end
+    if objeto.name == "P1" then
+        sueloMapa = objeto
+    end
+
+end
+
+
+
+for _, objeto in ipairs(Mapa.layers["Colisiones"].objects) do
+
+    mundo:add(
+        objeto,
+        objeto.x,
+        objeto.y,
+        objeto.width,
+        objeto.height
+    )
+
+end
+Mapa.layers["Colisiones"].visible = false
+
+    -- Inicializamos la camara
+    camara_principal = Camara()
+  
     jugador = Jugador(100, 400)
 
-    trampa = Trampa (450, 490)
+    -- Agregamos el jugador al mundo de colisiones
+    mundo:add(
+    jugador,
+    jugador.x,
+    jugador.y,
+    jugador.ancho,
+    jugador.alto
+)
+    -- Agregamos las trampas al mundo de colisiones
+    trampa1 = Trampa(450, 0)
+trampa1.y =
+    sueloMapa.y - trampa1.alto
+
+trampa2 = Trampa(1000, 0)
+trampa2.y =
+    sueloMapa.y - trampa2.alto
 
     -- Jugador parado
     jugador.sprite = love.graphics.newImage("img/jugador/parado.png")
@@ -69,36 +122,58 @@ function love.load()
 MusicaFondo:setLooping(true)
 MusicaFondo:play()
 
-    -- Spritesheet de trampa
-    trampa.sprite =
+-- ================= TRAMPAS =================
+
+local spriteTrampa =
     love.graphics.newImage("img/trampa/charco.png")
 
-trampa.spritesheet =
+local spritesheetTrampa =
     love.graphics.newImage("img/trampa/activacion.png")
-    
+
+
 -- Dividir spritesheet de activación
 -- 4 columnas x 3 filas = 12 frames
 
-local anchoFrame = trampa.spritesheet:getWidth() / 4
-local altoFrame = trampa.spritesheet:getHeight() / 3
+local anchoFrame =
+    spritesheetTrampa:getWidth() / 4
+
+local altoFrame =
+    spritesheetTrampa:getHeight() / 3
+
+
+local animacionTrampa = {}
+
 
 for fila = 0, 2 do
 
     for columna = 0, 3 do
 
         table.insert(
-            trampa.animacion,
+            animacionTrampa,
             love.graphics.newQuad(
                 anchoFrame * columna,
                 altoFrame * fila,
                 anchoFrame,
                 altoFrame,
-                trampa.spritesheet
+                spritesheetTrampa
             )
         )
 
+    end
+
 end
-end
+-- Configurar trampa 1
+
+trampa1.sprite = spriteTrampa
+trampa1.spritesheet = spritesheetTrampa
+trampa1.animacion = animacionTrampa
+
+
+-- Configurar trampa 2
+
+trampa2.sprite = spriteTrampa
+trampa2.spritesheet = spritesheetTrampa
+trampa2.animacion = animacionTrampa
 
 -- MaquinaEstado
 maquinaEstados = MaquinaEstado({
@@ -122,14 +197,18 @@ maquinaEstados = MaquinaEstado({
     })
 
     maquinaEstados:cambiar(
-        "jugando",
-        {
-            jugador = jugador,
-            trampa = trampa,
-            sueloY = Suelo.y,
-            maquina = maquinaEstados
-        }
-    )
+    "jugando",
+    {
+        jugador = jugador,
+        trampas = {
+            trampa1,
+            trampa2
+        },
+        maquina = maquinaEstados,
+        mundo = mundo,
+        paredDerecha = paredDerecha
+    }
+)
 end
 
 
@@ -139,18 +218,29 @@ function ReiniciarJuego()
 
     jugador:reiniciar(
         100,
-        Suelo.y - jugador.alto
+        478
     )
 
-    trampa:reiniciar()
+    mundo:update(
+        jugador,
+        jugador.x,
+        jugador.y
+    )
+
+    trampa1:reiniciar()
+    trampa2:reiniciar()
 
     maquinaEstados:cambiar(
         "jugando",
         {
             jugador = jugador,
-            trampa = trampa,
-            sueloY = Suelo.y,
-            maquina = maquinaEstados
+            trampas = {
+                trampa1,
+                trampa2
+            },
+            maquina = maquinaEstados,
+            mundo = mundo,
+            paredDerecha = paredDerecha
         }
     )
 
@@ -171,7 +261,7 @@ function love.keypressed(key)
         if not jugador.muerto
         and not jugador.muriendo
         and not jugador.gano
-        and jugador.y + jugador.alto >= Suelo.y then
+        and jugador.estaEnSuelo then
 
             jugador:saltar()
 
@@ -192,23 +282,94 @@ function love.update(dt)
 
     maquinaEstados:actualizar(dt)
 
+    local anchoMapa =
+        Mapa.width * Mapa.tilewidth
+
+    local altoMapa =
+        Mapa.height * Mapa.tileheight
+
+    local mitadPantallaX =
+        love.graphics.getWidth() / 2
+
+    local mitadPantallaY =
+        love.graphics.getHeight() / 2
+
+    local centroJugadorX =
+    jugador.x + jugador.ancho / 2
+
+local camaraX =
+    math.max(
+        mitadPantallaX,
+        math.min(
+            centroJugadorX,
+            anchoMapa - mitadPantallaX
+        )
+    )
+
+    local camaraY =
+        math.max(
+            mitadPantallaY,
+            math.min(
+                jugador.y,
+                altoMapa - mitadPantallaY
+            )
+        )
+
+    camara_principal:lookAt(
+        camaraX,
+        camaraY
+    )
+
 end
 -- =================== RENDERIZADO ===================
 
 function love.draw()
 
-        -- FONDO
-    love.graphics.draw(
-        Fondo,
-        0,
-        0,
-        0,
-        800 / Fondo:getWidth(),
-        600 / Fondo:getHeight()
-    )
-    
+    camara_principal:attach()
+
+    -- ================= MAPA =================
+    Mapa:drawLayer(Mapa.layers["Piso"])
+    Mapa:drawLayer(Mapa.layers["Decoracion"])
 -- ================= JUEGO =================
 maquinaEstados:dibujar()
+
+camara_principal:detach()
+
+if jugador.muerto then
+    love.graphics.printf(
+        "¡HAS MUERTO!",
+        0,
+        250,
+        love.graphics.getWidth(),
+        "center"
+    )
+
+    love.graphics.printf(
+        "Las profundidades te han reclamado...",
+        0,
+        280,
+        love.graphics.getWidth(),
+        "center"
+    )
+
+    love.graphics.printf(
+        "Presiona R para intentarlo nuevamente",
+        0,
+        310,
+        love.graphics.getWidth(),
+        "center"
+    )
+end
+
+if jugador.gano then
+    love.graphics.printf(
+        "¡GANASTE! Presiona R para reiniciar",
+        0,
+        250,
+        love.graphics.getWidth(),
+        "center"
+    )
+end
 
     -- ================= CONTROLES =================
 
