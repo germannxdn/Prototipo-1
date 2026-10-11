@@ -58,6 +58,8 @@ for _, trampa in ipairs(self.trampas) do
 
         self.jugador.velocidadY = 0
 
+        Eventos.emitir("jugador-muere")
+
         self.maquina:cambiar(
             "muriendo",
             {

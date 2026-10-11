@@ -9,6 +9,8 @@ EstadoMuriendo = require "estados.estadoMuriendo"
 EstadoMuerto = require "estados.estadoMuerto"
 EstadoGanado = require "estados.estadoGanado"
 
+Eventos = require "eventos"
+HUD = require "hud"
 
 
 -- =================== DECLARACION ===================
@@ -22,6 +24,16 @@ camara_principal = nil
 mundo = nil
 paredDerecha = nil
 sueloMapa = nil
+
+-- Efecto visual de muerte
+tiempoParpadeo = 0
+duracionParpadeo = 2.0
+intervaloParpadeo = 0.1
+
+-- Vibración de cámara
+tiempoVibracion = 0
+duracionVibracion = 2.0
+intensidadVibracion = 8
 
 -- =================== COLISION ===================
 
@@ -84,11 +96,11 @@ Mapa.layers["Colisiones"].visible = false
     -- Agregamos las trampas al mundo de colisiones
     trampa1 = Trampa(450, 0)
 trampa1.y =
-    sueloMapa.y - trampa1.alto
+    sueloMapa.y - trampa1.alto + 2
 
 trampa2 = Trampa(1000, 0)
 trampa2.y =
-    sueloMapa.y - trampa2.alto
+    sueloMapa.y - trampa2.alto + 2
 
     -- Jugador parado
     jugador.sprite = love.graphics.newImage("img/jugador/parado.png")
@@ -117,10 +129,19 @@ trampa2.y =
     end
     -- Sprite Fondo
     Fondo = love.graphics.newImage("img/fondo.png")
+
+
+-----------Audio-----------------
     -- Musica de fondo
-    MusicaFondo = love.audio.newSource("musicadefondo.wav", "stream")
+    MusicaFondo = love.audio.newSource("audio/musicadefondo.wav", "stream")
 MusicaFondo:setLooping(true)
 MusicaFondo:play()
+
+-- Sonido de muerte
+sonidoMuerte = love.audio.newSource(
+    "audio/grito_muerte.wav",
+    "static"
+)
 
 -- ================= TRAMPAS =================
 
@@ -211,6 +232,21 @@ maquinaEstados = MaquinaEstado({
 )
 end
 
+hud = HUD()
+
+-- =================== EVENTOS ===================
+Eventos.registrar("jugador-muere", function()
+    sonidoMuerte:stop()
+    sonidoMuerte:play()
+end)
+-- Efecto visual de muerte
+Eventos.registrar("jugador-muere", function()
+    tiempoParpadeo = duracionParpadeo
+end)
+-- Vibración de cámara
+Eventos.registrar("jugador-muere", function()
+    tiempoVibracion = duracionVibracion
+end)
 
 -- =================== REINICIAR JUEGO ===================
 
@@ -280,6 +316,18 @@ end
 
 function love.update(dt)
 
+    -- Efecto visual de muerte
+    if tiempoParpadeo > 0 then
+    tiempoParpadeo = math.max(0, tiempoParpadeo - dt)
+end
+    if tiempoVibracion > 0 then
+    tiempoVibracion = math.max(
+        0,
+        tiempoVibracion - dt
+    )
+end
+
+-- Actualizamos la maquina de estados
     maquinaEstados:actualizar(dt)
 
     local anchoMapa =
@@ -315,10 +363,29 @@ local camaraX =
             )
         )
 
+    -- ================= CAMARA Y VIBRACIÓN =================
+
+if tiempoVibracion > 0 then
+
+    local desplazamientoX =
+        (love.math.random() * 2 - 1) * intensidadVibracion
+
+    local desplazamientoY =
+        (love.math.random() * 2 - 1) * intensidadVibracion
+
+    camara_principal:lookAt(
+        camaraX + desplazamientoX,
+        camaraY + desplazamientoY
+    )
+
+else
+
     camara_principal:lookAt(
         camaraX,
         camaraY
     )
+
+end
 
 end
 -- =================== RENDERIZADO ===================
@@ -337,6 +404,37 @@ love.graphics.draw(Fondo, 0, 0)
 maquinaEstados:dibujar()
 
 camara_principal:detach()
+
+-- ================= PARPADEO OSCURO =================
+
+if tiempoParpadeo > 0 then
+
+    local tiempoTranscurrido =
+        duracionParpadeo - tiempoParpadeo
+
+    local parpadeo =
+        math.floor(tiempoTranscurrido / intervaloParpadeo)
+
+    -- Alternar entre oscuro y visible
+    if parpadeo % 2 == 0 then
+
+        love.graphics.setColor(0, 0, 0, 0.85)
+
+        love.graphics.rectangle(
+            "fill",
+            0,
+            0,
+            love.graphics.getWidth(),
+            love.graphics.getHeight()
+        )
+
+        love.graphics.setColor(1, 1, 1, 1)
+
+    end
+
+end
+
+hud:Draw()
 
 if jugador.muerto then
     love.graphics.printf(
