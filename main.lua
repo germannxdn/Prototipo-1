@@ -35,6 +35,16 @@ tiempoVibracion = 0
 duracionVibracion = 2.0
 intensidadVibracion = 8
 
+-- =================== INTERFAZ ===================
+-- Menu principal
+estadoInterfaz = "menu"
+opcionMenu = 1
+mostrarControlesMenu = false
+-- Menu de pausa
+opcionPausa = 1
+-- Guarda desde dónde se abrió el panel de controles
+origenControles = "menu"
+
 -- =================== COLISION ===================
 
 function HayColision(a, b)
@@ -83,7 +93,7 @@ Mapa.layers["Colisiones"].visible = false
     -- Inicializamos la camara
     camara_principal = Camara()
   
-    jugador = Jugador(100, 400)
+    jugador = Jugador(100, 478)
 
     -- Agregamos el jugador al mundo de colisiones
     mundo:add(
@@ -127,9 +137,14 @@ trampa2.y =
         )
 
     end
-    -- Sprite Fondo
+    -- Imagen del Fondo
     Fondo = love.graphics.newImage("img/fondo.png")
 
+    -- Imagen del Fondo del menú principal
+FondoMenu = love.graphics.newImage("img/menu_fondo.png")
+
+    -- Imagen del Panel de controles
+PanelControles = love.graphics.newImage("img/panel_controles.png")
 
 -----------Audio-----------------
     -- Musica de fondo
@@ -286,6 +301,102 @@ end
 
 function love.keypressed(key)
 
+        -- Navegación del menú principal
+    if estadoInterfaz == "menu" then
+
+        if key == "up" then
+            opcionMenu = opcionMenu - 1
+
+            if opcionMenu < 1 then
+                opcionMenu = 3
+            end
+
+        elseif key == "down" then
+            opcionMenu = opcionMenu + 1
+
+            if opcionMenu > 3 then
+                opcionMenu = 1
+            end
+
+        elseif key == "return" or key == "kpenter" then
+
+            if opcionMenu == 1 then
+                estadoInterfaz = "jugando"
+
+            elseif opcionMenu == 2 then
+                origenControles = "menu"
+                mostrarControlesMenu = true
+                estadoInterfaz = "controles"
+
+            elseif opcionMenu == 3 then
+                love.event.quit()
+            end
+
+        end
+
+        return
+    end
+    -- Volver desde el panel de controles
+if estadoInterfaz == "controles" then
+    if key == "escape" then
+        estadoInterfaz = origenControles
+        mostrarControlesMenu = false
+    end
+    return
+end
+
+    -- Abrir y cerrar pausa con P
+if key == "p" then
+    if estadoInterfaz == "jugando" then
+        estadoInterfaz = "pausa"
+        opcionPausa = 1
+        return
+    elseif estadoInterfaz == "pausa" then
+        estadoInterfaz = "jugando"
+        return
+    end
+end
+ -- Navegación del menú de pausa
+    if estadoInterfaz == "pausa" then
+
+        if key == "up" then
+            opcionPausa = opcionPausa - 1
+
+            if opcionPausa < 1 then
+                opcionPausa = 4
+            end
+
+        elseif key == "down" then
+            opcionPausa = opcionPausa + 1
+
+            if opcionPausa > 4 then
+                opcionPausa = 1
+            end
+
+        elseif key == "return" or key == "kpenter" then
+            if opcionPausa == 1 then
+                estadoInterfaz = "jugando"
+
+            elseif opcionPausa == 2 then
+                origenControles = "pausa"
+                estadoInterfaz = "controles"
+                mostrarControlesMenu = true
+
+            elseif opcionPausa == 3 then
+                ReiniciarJuego()
+                estadoInterfaz = "jugando"
+
+            elseif opcionPausa == 4 then
+                estadoInterfaz = "menu"
+                opcionMenu = 1
+            end
+        end
+
+        return
+    end
+
+
+
     -- Reiniciar juego
     if key == "r" then
         ReiniciarJuego()
@@ -326,6 +437,11 @@ end
         tiempoVibracion - dt
     )
 end
+
+    -- No actualizar el juego mientras estamos en el menú
+    if estadoInterfaz ~= "jugando" then
+        return
+    end
 
 -- Actualizamos la maquina de estados
     maquinaEstados:actualizar(dt)
@@ -392,6 +508,103 @@ end
 
 function love.draw()
 
+    -- Mostrar menú principal
+    if estadoInterfaz == "menu" then
+        local ancho = love.graphics.getWidth()
+        local alto = love.graphics.getHeight()
+
+        love.graphics.draw(
+            FondoMenu,
+            0, 0,
+            0,
+            ancho / FondoMenu:getWidth(),
+            alto / FondoMenu:getHeight()
+        )
+
+                -- Botones del menú
+        local botones = {"JUGAR", "CONTROLES", "SALIR"}
+
+        local anchoBoton = 260
+        local altoBoton = 55
+        local espacio = 18
+
+        local xBoton = ancho * 0.16
+        local yInicial = alto * 0.52
+
+        for i, texto in ipairs(botones) do
+            local y = yInicial + (i - 1) * (altoBoton + espacio)
+
+            -- Fondo del botón
+            if opcionMenu == i then
+                love.graphics.setColor(0.35, 0.05, 0.05, 0.95)
+            else
+                love.graphics.setColor(0.05, 0.04, 0.04, 0.90)
+            end
+
+            love.graphics.rectangle(
+                "fill",
+                xBoton,
+                y,
+                anchoBoton,
+                altoBoton,
+                8,
+                8
+            )
+
+            -- Borde del botón
+            love.graphics.setColor(0.65, 0.25, 0.18, 1)
+            love.graphics.rectangle(
+                "line",
+                xBoton,
+                y,
+                anchoBoton,
+                altoBoton,
+                8,
+                8
+            )
+
+            -- Texto
+            love.graphics.setColor(1, 0.85, 0.75, 1)
+            love.graphics.printf(
+                texto,
+                xBoton,
+                y + 17,
+                anchoBoton,
+                "center"
+            )
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+
+        return
+    end
+
+-- Panel de controles
+if estadoInterfaz == "controles" then
+    local anchoVentana = love.graphics.getWidth()
+    local altoVentana = love.graphics.getHeight()
+
+    local anchoPanel = anchoVentana * 0.75
+    local escala = anchoPanel / PanelControles:getWidth()
+    local altoPanel = PanelControles:getHeight() * escala
+
+
+    if altoPanel > altoVentana * 0.85 then
+        escala = (altoVentana * 0.85) / PanelControles:getHeight()
+        anchoPanel = PanelControles:getWidth() * escala
+        altoPanel = PanelControles:getHeight() * escala
+    end
+
+    local x = (anchoVentana - anchoPanel) / 2
+    local y = (altoVentana - altoPanel) / 2
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(PanelControles, x, y, 0, escala, escala)
+
+    return
+end
+
+    --  ================= CAMARA =================
     camara_principal:attach()
 
     -- ================= FONDO =================
@@ -404,6 +617,103 @@ love.graphics.draw(Fondo, 0, 0)
 maquinaEstados:dibujar()
 
 camara_principal:detach()
+
+
+    -- ================= MENU DE PAUSA =================
+    if estadoInterfaz == "pausa" then
+
+        local ancho = love.graphics.getWidth()
+        local alto = love.graphics.getHeight()
+
+        -- Oscurecer el juego de fondo
+        love.graphics.setColor(0, 0, 0, 0.75)
+        love.graphics.rectangle(
+            "fill", 0, 0, ancho, alto
+        )
+
+        -- Dimensiones del panel
+        local anchoPanel = 420
+        local altoPanel = 370
+        local xPanel = (ancho - anchoPanel) / 2
+        local yPanel = (alto - altoPanel) / 2
+
+        -- Panel oscuro
+        love.graphics.setColor(0.06, 0.05, 0.06, 0.96)
+        love.graphics.rectangle(
+            "fill",
+            xPanel, yPanel,
+            anchoPanel, altoPanel,
+            10, 10
+        )
+
+        -- Borde rojizo
+        love.graphics.setColor(0.65, 0.20, 0.16, 1)
+        love.graphics.setLineWidth(2)
+        love.graphics.rectangle(
+            "line",
+            xPanel, yPanel,
+            anchoPanel, altoPanel,
+            10, 10
+        )
+
+        -- Título
+        love.graphics.setColor(0.90, 0.78, 0.68, 1)
+        love.graphics.printf(
+            "JUEGO EN PAUSA",
+            xPanel, yPanel + 28,
+            anchoPanel, "center"
+        )
+
+        -- Opciones
+        local opciones = {
+            "CONTINUAR",
+            "CONTROLES",
+            "REINICIAR NIVEL",
+            "MENU PRINCIPAL"
+        }
+
+        local altoBoton = 48
+        local espacio = 12
+        local yInicial = yPanel + 85
+
+        for i, texto in ipairs(opciones) do
+            local xBoton = xPanel + 40
+            local yBoton = yInicial + (i - 1) * (altoBoton + espacio)
+            local anchoBoton = anchoPanel - 80
+
+            -- Resaltar la opción seleccionada
+            if opcionPausa == i then
+                love.graphics.setColor(0.35, 0.06, 0.06, 1)
+            else
+                love.graphics.setColor(0.12, 0.10, 0.11, 1)
+            end
+
+            love.graphics.rectangle(
+                "fill",
+                xBoton, yBoton,
+                anchoBoton, altoBoton,
+                6, 6
+            )
+
+            love.graphics.setColor(0.65, 0.25, 0.18, 1)
+            love.graphics.rectangle(
+                "line",
+                xBoton, yBoton,
+                anchoBoton, altoBoton,
+                6, 6
+            )
+
+            love.graphics.setColor(1, 0.85, 0.75, 1)
+            love.graphics.printf(
+                texto,
+                xBoton, yBoton + 14,
+                anchoBoton, "center"
+            )
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+
 
 -- ================= PARPADEO OSCURO =================
 
@@ -514,7 +824,7 @@ end
     love.graphics.print(
         "Presiona H para ver los controles",
         20,
-        20
+        95
     )
 
 end

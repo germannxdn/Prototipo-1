@@ -29,6 +29,8 @@ function Jugador:init(x, y)
     self.frameCorrer = 1
     self.tiempoAnimacion = 0
     self.velocidadAnimacion = 0.10
+
+    self.corriendo = false
     
 end
 function Jugador:actualizar(dt, mundo)
@@ -90,45 +92,27 @@ end
 
 
     -- Animación de correr
-
-    local corriendo =
+    self.corriendo =
         love.keyboard.isDown("left")
         or love.keyboard.isDown("right")
 
-
-    if corriendo then
-
+    if self.corriendo then
         self.tiempoAnimacion =
             self.tiempoAnimacion + dt
 
-
-        if self.tiempoAnimacion >=
-           self.velocidadAnimacion then
-
+        if self.tiempoAnimacion >= self.velocidadAnimacion then
             self.tiempoAnimacion = 0
+            self.frameCorrer = self.frameCorrer + 1
 
-            self.frameCorrer =
-                self.frameCorrer + 1
-
-
-            if self.frameCorrer >
-               #self.animCorrer then
-
+            if self.frameCorrer > #self.animCorrer then
                 self.frameCorrer = 1
-
             end
-
         end
-
     else
-
         self.frameCorrer = 1
         self.tiempoAnimacion = 0
-
     end
-
 end
-
 
 function Jugador:saltar()
     self.velocidadY = -self.velSalto
@@ -152,6 +136,8 @@ function Jugador:reiniciar(x, y)
     self.velocidadY = 0
     self.estaEnSuelo = false
 
+    self.corriendo = false
+
 end
 
 function Jugador:dibujar()
@@ -165,8 +151,7 @@ function Jugador:dibujar()
 
     -- Si está corriendo
 
-    if love.keyboard.isDown("left")
-    or love.keyboard.isDown("right") then
+    if self.corriendo then
 
         local escala =
             64 / (self.spritesheetCorrer:getWidth() / 4)
