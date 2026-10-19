@@ -11,7 +11,9 @@ function EstadoJugando:init()
     self.maquina = nil
     self.mundo = nil
     self.paredDerecha = nil
-
+    self.cuervo = nil
+    self.xActivacionCuervo = 1200
+    self.alturaVueloCuervo = 0
 end
 
 
@@ -23,6 +25,10 @@ function EstadoJugando:ingresar(parametros)
     self.maquina = parametros.maquina
     self.mundo = parametros.mundo
     self.paredDerecha = parametros.paredDerecha
+    self.cuervo = parametros.cuervo
+    self.xActivacionCuervo = parametros.xActivacionCuervo or 1200
+    self.alturaVueloCuervo =
+    parametros.alturaVueloCuervo or (self.sueloY - 110)
 end
 
 
@@ -44,6 +50,33 @@ function EstadoJugando:actualizar(dt)
     trampa:actualizar(dt)
 end
 
+-- ================= CUERVO =================
+-- El cuervo aparece una sola vez al superar la segunda trampa
+if self.cuervo
+and not self.cuervo.aparecio
+and self.jugador.x >= self.xActivacionCuervo then
+
+    self.cuervo:iniciar(
+        self.jugador.x + love.graphics.getWidth() / 2,
+        self.alturaVueloCuervo
+    )
+end
+
+-- Actualizar el cuervo y detectar el impacto
+if self.cuervo then
+    local impacto = self.cuervo:actualizar(dt, self.jugador)
+
+    if impacto then
+        Eventos.emitir("jugador-muere")
+
+        self.maquina:cambiar("muriendo", {
+            jugador = self.jugador,
+            maquina = self.maquina
+        })
+
+        return
+    end
+end
 
     -- ================= COLISION =================
 
@@ -98,10 +131,14 @@ end
 function EstadoJugando:dibujar()
 
     for _, trampa in ipairs(self.trampas) do
-    trampa:dibujar()
-end
-    self.jugador:dibujar()
+        trampa:dibujar()
+    end
 
+    if self.cuervo then
+        self.cuervo:dibujar()
+    end
+
+    self.jugador:dibujar()
 end
 
 

@@ -2,6 +2,7 @@ require "dependencias"
 
 Jugador = require "entidades.jugador"
 Trampa = require "entidades.trampa"
+Cuervo = require "entidades.cuervo"
 
 MaquinaEstado = require "maquinaEstados"
 EstadoJugando = require "estados.estadoJugando"
@@ -112,9 +113,39 @@ trampa2 = Trampa(1000, 0)
 trampa2.y =
     sueloMapa.y - trampa2.alto + 2
 
+    -- ================= CUERVO =================
+
+cuervo = Cuervo()
+
+cuervo.spritesheet =
+    love.graphics.newImage("img/cuervo/cuervo_vuelo.png")
+
+local anchoFrameCuervo = 256
+local altoFrameCuervo = 256
+
+for i = 0, 7 do
+    table.insert(
+        cuervo.animacion,
+        love.graphics.newQuad(
+            i * anchoFrameCuervo,
+            0,
+            anchoFrameCuervo,
+            altoFrameCuervo,
+            cuervo.spritesheet
+        )
+    )
+end
+
+-- Tamaño visible del cuervo en el juego
+cuervo.ancho = 80
+cuervo.alto = 50
+cuervo.velocidad = 260
+
     -- Jugador parado
     jugador.sprite = love.graphics.newImage("img/jugador/parado.png")
-    
+    -- Sprite del jugador agachado
+    jugador.spriteAgachado =
+    love.graphics.newImage("img/jugador/agachado.png")
     -- Spritesheet de correr
     jugador.spritesheetCorrer =
         love.graphics.newImage("img/jugador/correr.png")
@@ -242,7 +273,11 @@ maquinaEstados = MaquinaEstado({
         },
         maquina = maquinaEstados,
         mundo = mundo,
-        paredDerecha = paredDerecha
+        paredDerecha = paredDerecha,
+        cuervo = cuervo,
+         xActivacionCuervo = 1200,
+        sueloY = sueloMapa.y,
+        alturaVueloCuervo = sueloMapa.y - 110
     }
 )
 end
@@ -280,20 +315,24 @@ function ReiniciarJuego()
 
     trampa1:reiniciar()
     trampa2:reiniciar()
+    cuervo:reiniciar()
 
     maquinaEstados:cambiar(
-        "jugando",
-        {
-            jugador = jugador,
-            trampas = {
-                trampa1,
-                trampa2
-            },
-            maquina = maquinaEstados,
-            mundo = mundo,
-            paredDerecha = paredDerecha
-        }
-    )
+    "jugando",
+    {
+        jugador = jugador,
+        trampas = {
+            trampa1,
+            trampa2
+        },
+        cuervo = cuervo,
+        maquina = maquinaEstados,
+        mundo = mundo,
+        paredDerecha = paredDerecha,
+        xActivacionCuervo = 1200,
+        alturaVueloCuervo = sueloMapa.y - 110
+    }
+)
 
 end
 
@@ -414,10 +453,6 @@ end
 
         end
 
-    end
-    -- MOSTRAR / OCULTAR CONTROLES
-    if key == "h" then
-        mostrarControles = not mostrarControles
     end
 
 end
@@ -580,29 +615,25 @@ function love.draw()
     end
 
 -- Panel de controles
+
 if estadoInterfaz == "controles" then
     local anchoVentana = love.graphics.getWidth()
     local altoVentana = love.graphics.getHeight()
 
-    local anchoPanel = anchoVentana * 0.75
-    local escala = anchoPanel / PanelControles:getWidth()
-    local altoPanel = PanelControles:getHeight() * escala
-
-
-    if altoPanel > altoVentana * 0.85 then
-        escala = (altoVentana * 0.85) / PanelControles:getHeight()
-        anchoPanel = PanelControles:getWidth() * escala
-        altoPanel = PanelControles:getHeight() * escala
-    end
-
-    local x = (anchoVentana - anchoPanel) / 2
-    local y = (altoVentana - altoPanel) / 2
-
     love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(PanelControles, x, y, 0, escala, escala)
+
+    love.graphics.draw(
+        PanelControles,
+        0,
+        0,
+        0,
+        anchoVentana / PanelControles:getWidth(),
+        altoVentana / PanelControles:getHeight()
+    )
 
     return
 end
+
 
     --  ================= CAMARA =================
     camara_principal:attach()
@@ -782,47 +813,13 @@ if jugador.gano then
     )
 end
 
-    -- ================= CONTROLES =================
 
-    if mostrarControles then
-
-        love.graphics.print(
-            "CONTROLES",
-            330,
-            80
-        )
-
-        love.graphics.print(
-            "FLECHAS IZQ / DER  -  MOVERSE",
-            250,
-            120
-        )
-
-        love.graphics.print(
-            "ESPACIO  -  SALTAR",
-            280,
-            150
-        )
-
-        love.graphics.print(
-            "R  -  REINICIAR",
-            300,
-            180
-        )
-
-        love.graphics.print(
-            "H  -  OCULTAR CONTROLES",
-            260,
-            210
-        )
-
-    end
     -- ================= AYUDA =================
 
     if not jugador.muerto and not jugador.gano then
 
     love.graphics.print(
-        "Presiona H para ver los controles",
+        "Presiona P para pausar",
         20,
         95
     )

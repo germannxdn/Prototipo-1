@@ -9,6 +9,12 @@ function Jugador:init(x, y)
     self.ancho = 64
     self.alto = 64
 
+    -- Agachado
+self.altoNormal = 64
+self.altoAgachado = 36
+self.agachado = false
+self.spriteAgachado = nil
+
     self.vel = 200
     self.velSalto = 500
 
@@ -35,20 +41,41 @@ function Jugador:init(x, y)
 end
 function Jugador:actualizar(dt, mundo)
 
--- Movimiento horizontal
+-- Estado de agachado
+local quiereAgacharse = love.keyboard.isDown("down")
 
+if quiereAgacharse and not self.agachado then
+    self.agachado = true
+
+    -- Mantener los pies en el mismo lugar
+    self.y = self.y + (self.altoNormal - self.altoAgachado)
+    self.alto = self.altoAgachado
+
+    mundo:update(self, self.x, self.y, self.ancho, self.alto)
+
+elseif not quiereAgacharse and self.agachado then
+    self.agachado = false
+
+    self.y = self.y - (self.altoNormal - self.altoAgachado)
+    self.alto = self.altoNormal
+
+    mundo:update(self, self.x, self.y, self.ancho, self.alto)
+end
+
+-- Movimiento horizontal
 local movimientoX = 0
 
-if love.keyboard.isDown("left") then
-    movimientoX = -self.vel * dt
-    self.mirandoDerecha = false
-end
+if not self.agachado then
+    if love.keyboard.isDown("left") then
+        movimientoX = -self.vel * dt
+        self.mirandoDerecha = false
+    end
 
-if love.keyboard.isDown("right") then
-    movimientoX = self.vel * dt
-    self.mirandoDerecha = true
+    if love.keyboard.isDown("right") then
+        movimientoX = self.vel * dt
+        self.mirandoDerecha = true
+    end
 end
-
 
 -- Gravedad
 
@@ -115,6 +142,8 @@ end
 end
 
 function Jugador:saltar()
+    if self.agachado then return end
+
     self.velocidadY = -self.velSalto
 end
 
@@ -138,6 +167,9 @@ function Jugador:reiniciar(x, y)
 
     self.corriendo = false
 
+    self.agachado = false
+    self.alto = self.altoNormal
+
 end
 
 function Jugador:dibujar()
@@ -147,6 +179,24 @@ function Jugador:dibujar()
     if self.muriendo or self.muerto then
         return
     end
+
+    -- Dibujar al jugador agachado
+if self.agachado then
+    local escala = 64 / self.spriteAgachado:getWidth()
+    local altoDibujo =
+        self.spriteAgachado:getHeight() * escala
+
+    love.graphics.draw(
+        self.spriteAgachado,
+        self.x,
+        self.y + self.alto - altoDibujo,
+        0,
+        escala,
+        escala
+    )
+
+    return
+end
 
 
     -- Si está corriendo
