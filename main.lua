@@ -13,6 +13,7 @@ EstadoGanado = require "estados.estadoGanado"
 Eventos = require "eventos"
 HUD = require "hud"
 
+Dialogo = require "dialogo"
 
 -- =================== DECLARACION ===================
 
@@ -63,6 +64,12 @@ function love.load()
     Mapa = STI("mapa/nivel1.lua")
 
     mundo = Bump.newWorld(64)
+
+    -- ================= DIALOGO =================
+    FuenteDialogo = love.graphics.newFont(
+    "fuentes/SpecialElite-Regular.ttf",
+    21
+)
 
     -- Buscamos la pared derecha en el mapa
     for _, objeto in ipairs(Mapa.layers["Colisiones"].objects) do
@@ -340,6 +347,19 @@ end
 
 function love.keypressed(key)
 
+    -- Introduccion narrativa
+    if estadoInterfaz == "dialogo" then
+        if key == "return" or key == "kpenter" then
+            Dialogo:avanzar()
+
+            if Dialogo.finalizado then
+                estadoInterfaz = "jugando"
+            end
+        end
+
+        return
+    end
+
         -- Navegación del menú principal
     if estadoInterfaz == "menu" then
 
@@ -360,7 +380,8 @@ function love.keypressed(key)
         elseif key == "return" or key == "kpenter" then
 
             if opcionMenu == 1 then
-                estadoInterfaz = "jugando"
+            Dialogo:iniciar()
+            estadoInterfaz = "dialogo"
 
             elseif opcionMenu == 2 then
                 origenControles = "menu"
@@ -473,13 +494,19 @@ end
     )
 end
 
-    -- No actualizar el juego mientras estamos en el menú
-    if estadoInterfaz ~= "jugando" then
-        return
-    end
+-- No actualizar el juego en el menú ni en otras pantallas.
+-- Durante el diálogo, sí necesitamos actualizar la cámara.
+if estadoInterfaz ~= "jugando"
+and estadoInterfaz ~= "dialogo" then
+    return
+end
 
--- Actualizamos la maquina de estados
+-- Actualizamos la máquina de estados solamente durante el juego.
+if estadoInterfaz == "jugando" then
     maquinaEstados:actualizar(dt)
+end
+
+
 
     local anchoMapa =
         Mapa.width * Mapa.tilewidth
@@ -613,6 +640,33 @@ function love.draw()
 
         return
     end
+
+
+
+-- Introduccion narrativa sobre el juego real
+if estadoInterfaz == "dialogo" then
+
+
+    -- Dibujar el escenario con la camara habitual.
+    camara_principal:attach()
+
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(Fondo, 0, 0)
+
+    Mapa:drawLayer(Mapa.layers["Piso"])
+    Mapa:drawLayer(Mapa.layers["Decoracion"])
+
+    -- Dibujar el personaje y los elementos del nivel.
+    maquinaEstados:dibujar()
+
+    camara_principal:detach()
+
+    -- Dibujar el dialogo por encima del escenario.
+    Dialogo:dibujar()
+
+    return
+end
+
 
 -- Panel de controles
 
